@@ -49,19 +49,20 @@ with st.sidebar:
             st.session_state["example_query"] = ex
 
 # ── Load Index ─────────────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner=False)
-def get_retriever(force=False):
-    return build_index(force_rebuild=force)
+@st.cache_resource(show_spinner="Building index... this takes 3-5 minutes on first run.")
+def get_retriever():
+    return build_index(force_rebuild=False)
 
-if "retriever" not in st.session_state or rebuild:
-    with st.spinner("Loading index..."):
-        try:
-            store, retriever = get_retriever(force=rebuild)
-            st.session_state["retriever"] = retriever
-            st.sidebar.success(f"✅ {store.index.ntotal} vectors loaded")
-        except Exception as e:
-            st.error(f"Index build failed: {e}")
-            st.stop()
+if rebuild:
+    st.cache_resource.clear()
+
+try:
+    store, retriever = get_retriever()
+    st.session_state["retriever"] = retriever
+    st.sidebar.success(f"✅ {store.index.ntotal} vectors loaded")
+except Exception as e:
+    st.error(f"Index build failed: {e}")
+    st.stop()
 
 # ── Chat History ───────────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
