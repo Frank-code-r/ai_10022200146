@@ -78,24 +78,41 @@ def build_index(force_rebuild=False):
 
     return store, retriever
 
+def _call_groq_with_messages(messages, api_key):
+    """Call Groq with a full messages array (supports memory)."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "temperature": 0.2,
+        "max_tokens": 512,
+    }
+    resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
 
-def run_query(query, retriever, api_key, top_k=5, use_hybrid=True):
+def run_query(query, retriever, api_key, top_k=5, use_hybrid=True, chat_history=None):
     """
-    Full RAG pipeline for a single query:
-    Query → Retrieve → Prompt → LLM → Response
-
-    Logs every stage.
+    Full RAG pipeline for a single query.
+    
+    Part G Innovation: Memory-based RAG
+    - chat_history is a list of previous {role, content} dicts
+    - Previous conversation is injected into the LLM call
+    - Allows follow-up questions to use prior context
     """
     clear_session_log()
 
-    # Stage 1: Receive query
     log_stage("query_received", {
         "query": query,
         "top_k": top_k,
         "mode": "hybrid" if use_hybrid else "vector_only",
+        "history_turns": len(chat_history) if chat_history else 0,
     })
 
-    # Stage 2: Retrieve
+    # Stage 1: Retrieve
     if use_hybrid:
         retrieved = retriever.retrieve(query, top_k=top_k)
     else:
@@ -107,17 +124,29 @@ def run_query(query, retriever, api_key, top_k=5, use_hybrid=True):
         "sources": [c.source for c, _ in retrieved],
     })
 
-    # Stage 3: Build prompt
+    # Stage 2: Build prompt
     system_prompt, user_message, selected_chunks = build_prompt(query, retrieved)
 
     log_stage("prompt_built", {
         "chunks_selected": len(selected_chunks),
         "prompt_length_chars": len(user_message),
+        "memory_turns_injected": len(chat_history) if chat_history else 0,
     })
+
+    # Stage 3: Build messages with memory
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # Inject last 3 turns of chat history (Part G: memory)
+    if chat_history:
+        for turn in chat_history[-6:]:  # last 3 Q&A pairs = 6 messages
+            messages.append(turn)
+
+    # Add current query
+    messages.append({"role": "user", "content": user_message})
 
     # Stage 4: Call LLM
     try:
-        answer = _call_groq(system_prompt, user_message, api_key)
+        answer = _call_groq_with_messages(messages, api_key)
     except Exception as e:
         answer = f"LLM call failed: {e}"
 
