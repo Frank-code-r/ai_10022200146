@@ -34,12 +34,12 @@ class VectorStore:
         self.chunks = []
 
     def build(self, chunks, embeddings):
-        """Build FAISS index from chunks and their embeddings."""
         assert len(chunks) == embeddings.shape[0]
         self.chunks = chunks
+        self.dim = embeddings.shape[1]  # set dim from actual embeddings
         self.index = faiss.IndexFlatIP(self.dim)
         self.index.add(embeddings)
-        print(f"[VectorStore] Built index with {self.index.ntotal} vectors")
+        print(f"[VectorStore] Built index with {self.index.ntotal} vectors, dim={self.dim}")
 
     def save(self):
         """Save index and metadata to disk."""
