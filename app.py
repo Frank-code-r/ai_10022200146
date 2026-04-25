@@ -61,7 +61,9 @@ try:
     st.session_state["retriever"] = retriever
     st.sidebar.success(f"✅ {store.index.ntotal} vectors loaded")
 except Exception as e:
+    import traceback
     st.error(f"Index build failed: {e}")
+    st.code(traceback.format_exc())
     st.stop()
 
 # ── Chat History ───────────────────────────────────────────────────────────────
