@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Data (too large for GitHub)
+data/
+
+# Logs
+logs/pipeline_log.jsonl
+
+# Virtual environment
+venv/
+.venv/
