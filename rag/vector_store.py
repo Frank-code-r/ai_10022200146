@@ -28,7 +28,7 @@ META_PATH  = os.path.join(STORE_DIR, "metadata.pkl")
 
 
 class VectorStore:
-    def __init__(self, dim=384):
+    def __init__(self, dim=None):
         self.dim = dim
         self.index = None
         self.chunks = []
