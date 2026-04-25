@@ -99,6 +99,7 @@ if query:
                 api_key=api_key,
                 top_k=top_k,
                 use_hybrid=use_hybrid,
+                chat_history=st.session_state["messages"],
             )
 
         # Answer
