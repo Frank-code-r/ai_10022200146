@@ -61,7 +61,7 @@ def chunk_csv_texts(texts):
 
 # ── PDF Chunker ────────────────────────────────────────────────────────────────
 
-def chunk_pdf_texts(texts, chunk_size=800, overlap=150):
+def chunk_pdf_texts(texts, chunk_size=1200, overlap=200):
     """
     Sliding window chunking for long PDF prose.
     Tries to break at sentence boundaries ('. ') to avoid
