@@ -1,5 +1,5 @@
 # vector_store.py
-# Author: [Your Name] | Index: [Your Index Number]
+# Author: Frank Afelete Kofi Dogli | Index: 10022200146
 # Part B: Vector Storage using FAISS
 
 """
@@ -49,14 +49,15 @@ class VectorStore:
         print(f"[VectorStore] Saved to {STORE_DIR}")
 
     def load(self):
-        """Load from disk. Returns True if successful, False if not found."""
         if not (os.path.exists(INDEX_PATH) and os.path.exists(META_PATH)):
             return False
         self.index = faiss.read_index(INDEX_PATH)
         with open(META_PATH, "rb") as f:
             self.chunks = pickle.load(f)
-        print(f"[VectorStore] Loaded {self.index.ntotal} vectors from disk")
-        return True
+            from rag.embedder import load_tfidf_index
+            load_tfidf_index()
+            print(f"[VectorStore] Loaded {self.index.ntotal} vectors from disk")
+            return True
 
     def search(self, query_vec, top_k=5):
         """
